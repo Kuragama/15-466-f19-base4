@@ -1,8 +1,8 @@
-# (TODO: your game's title)
+# Birds Aren't Real
 
-Author: (TODO: your name)
+Author: Margot Stewart (erstewar)
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+Design:  As a weird little pellet thing, flee from the bird in 3D space!
 
 Screen Shot:
 
@@ -10,10 +10,11 @@ Screen Shot:
 
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+Use WASD to move on the XY plane and Space to jump.  The camera controls from the demo are still in place, but your movement isn't tied to camera orientation.
+You lose if the bird catches you or your fall in the water.
 
 Sources:
 
-(TODO: fill in information about the sources of any **artwork** or **sounds** you used in the game that you did not create yourself. Feel free to also credit yourself for things you did make.)
+All assets that weren't from the demo are my own.
 
 This game was built with [NEST](NEST.md).
