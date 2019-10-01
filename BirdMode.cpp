@@ -1,4 +1,4 @@
-#include "RollMode.hpp"
+#include "BirdMode.hpp"
 #include "DrawLines.hpp"
 #include "LitColorTextureProgram.hpp"
 #include "Mesh.hpp"
@@ -19,15 +19,15 @@ Load< SpriteAtlas > trade_font_atlas(LoadTagDefault, []() -> SpriteAtlas const *
 	return new SpriteAtlas(data_path("trade-font"));
 });
 
-RollMode::RollMode(RollLevel const &level_) : start(level_), level(level_) {
+BirdMode::BirdMode(BirdLevel const &level_) : start(level_), level(level_) {
 	restart();
 }
 
-RollMode::~RollMode() {
+BirdMode::~BirdMode() {
 }
 
-bool RollMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
-	/*if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_SPACE) {
+bool BirdMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
+	/*if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_SHIFT) {
 		DEBUG_fly = !DEBUG_fly;
 		return true;
 	}*/
@@ -38,7 +38,7 @@ bool RollMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_RETURN) {
 		if (won) {
 			//advance to next level:
-			std::list< RollLevel >::const_iterator current = roll_levels->begin();
+			std::list< BirdLevel >::const_iterator current = roll_levels->begin();
 			while (&*current != &start) {
 				++current;
 			}
@@ -47,8 +47,8 @@ bool RollMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			++current;
 			if (current == roll_levels->end()) current = roll_levels->begin();
 	
-			//launch a new RollMode with the next level:
-			Mode::set_current(std::make_shared< RollMode >(*current));
+			//launch a new BirdMode with the next level:
+			Mode::set_current(std::make_shared< BirdMode >(*current));
 		}
 		return true;
 	}
@@ -108,7 +108,7 @@ bool RollMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
-void RollMode::update(float elapsed) {
+void BirdMode::update(float elapsed) {
 	//NOTE: turn this on to fly the sphere instead of rolling it -- makes collision debugging easier
 	{ //player motion:
 		//build a shove from controls:
@@ -165,12 +165,11 @@ void RollMode::update(float elapsed) {
 		}
 		
 		//collide against level:
-		bool onGround = false;
 		float remain = elapsed;
 		for (int32_t iter = 0; iter < 10; ++iter) {
 			if (remain == 0.0f) break;
 
-			float sphere_radius = 0.1f; //player sphere is radius-0.1
+			float sphere_radius = 1.0f; //player sphere is radius-1
 			glm::vec3 sphere_sweep_from = position;
 			glm::vec3 sphere_sweep_to = position + velocity * remain;
 
@@ -235,13 +234,6 @@ void RollMode::update(float elapsed) {
 
 					if (did_collide) {
 						collided = true;
-						// Check if collided with water
-						if (collider.transform->name.substr(0, 5) == "Water") {
-							onGround = true;
-							won = true;
-						} else if (collider.transform->name.substr(0, 6) == "Ground") {
-							onGround = true;
-						}
 					}
 
 					//draw to indicate result of check:
@@ -310,29 +302,24 @@ void RollMode::update(float elapsed) {
 				remain = (1.0f - collision_t) * remain;
 			}
 		}
-		if (onGround && controls.jump) {
-			velocity.z += 5.0f;
-		}
 
 		//update player rotation (purely cosmetic):
-		/*rotation = glm::normalize(
+		rotation = glm::normalize(
 			  glm::angleAxis(elapsed * rotational_velocity.x, glm::vec3(1.0f, 0.0f, 0.0f))
 			* glm::angleAxis(elapsed * rotational_velocity.y, glm::vec3(0.0f, 1.0f, 0.0f))
 			* glm::angleAxis(elapsed * rotational_velocity.z, glm::vec3(0.0f, 0.0f, 1.0f))
 			* rotation
-		);*/
+		);
 	}
 
 	//goal update:
 	for (auto &goal : level.goals) {
-		// Not right but there's no hierarchy in the scene in question
-		if (!won) {
-			glm::vec3 impulse = glm::normalize(level.player.transform->position - goal.transform->position);
-			goal.transform->position += impulse * std::pow(0.5f, elapsed / 0.25f) * 0.1f;
+		goal.spin_acc += elapsed / 10.0f;
+		goal.spin_acc -= std::floor(goal.spin_acc);
+		goal.transform->rotation = glm::angleAxis(goal.spin_acc * 2.0f * 3.1415926f, glm::normalize(glm::vec3(1.0f)));
 
-			if (glm::length(goal.transform->make_local_to_world()[3] - level.player.transform->make_local_to_world()[3]) < 0.5f) {
-				won = true;
-			}
+		if (glm::length(goal.transform->make_local_to_world()[3] - level.player.transform->make_local_to_world()[3]) < 1.0f) {
+			won = true;
 		}
 	}
 
@@ -346,7 +333,7 @@ void RollMode::update(float elapsed) {
 	}
 }
 
-void RollMode::draw(glm::uvec2 const &drawable_size) {
+void BirdMode::draw(glm::uvec2 const &drawable_size) {
 	//--- actual drawing ---
 	glClearColor(0.45f, 0.45f, 0.50f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -365,7 +352,7 @@ void RollMode::draw(glm::uvec2 const &drawable_size) {
 		DrawSprites draw(*trade_font_atlas, glm::vec2(0,0), glm::vec2(320, 200), drawable_size, DrawSprites::AlignPixelPerfect);
 
 		{
-			std::string help_text = "wasd:move, space:jump, mouse:camera, bksp: reset";
+			std::string help_text = "wasd:move, mouse:camera, bksp: reset";
 			glm::vec2 min, max;
 			draw.get_text_extents(help_text, glm::vec2(0.0f, 0.0f), 1.0f, &min, &max);
 			float x = std::round(160.0f - (0.5f * (max.x + min.x)));
@@ -374,7 +361,7 @@ void RollMode::draw(glm::uvec2 const &drawable_size) {
 		}
 
 		if (won) {
-			std::string text = "YOU DIED";
+			std::string text = "Finished!";
 			glm::vec2 min, max;
 			draw.get_text_extents(text, glm::vec2(0.0f, 0.0f), 2.0f, &min, &max);
 			float x = std::round(160.0f - (0.5f * (max.x + min.x)));
@@ -382,7 +369,7 @@ void RollMode::draw(glm::uvec2 const &drawable_size) {
 			draw.draw_text(text, glm::vec2(x, 101.0f), 2.0f, glm::u8vec4(0xff,0xff,0xff,0xff));
 		}
 		if (won) {
-			std::string text = "Birds aren't real, press enter to flee again";
+			std::string text = "press enter for next";
 			glm::vec2 min, max;
 			draw.get_text_extents(text, glm::vec2(0.0f, 0.0f), 1.0f, &min, &max);
 			float x = std::round(160.0f - (0.5f * (max.x + min.x)));
@@ -403,7 +390,7 @@ void RollMode::draw(glm::uvec2 const &drawable_size) {
 	GL_ERRORS();
 }
 
-void RollMode::restart() {
+void BirdMode::restart() {
 	level = start;
 	won = false;
 }

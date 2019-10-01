@@ -1,27 +1,26 @@
 #pragma once
 
 #include "Mode.hpp"
-#include "RollLevel.hpp"
+#include "BirdLevel.hpp"
 #include "DrawLines.hpp"
 
 #include <memory>
 
-struct RollMode : Mode {
-	RollMode(RollLevel const &level);
-	virtual ~RollMode();
+struct BirdMode : Mode {
+	BirdMode(BirdLevel const &level);
+	virtual ~BirdMode();
 
 	virtual bool handle_event(SDL_Event const &, glm::uvec2 const &window_size) override;
 	virtual void update(float elapsed) override;
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
 	//The (starting shape of the) level:
-	RollLevel const &start;
+	BirdLevel const &start;
 
 	//The (active, being-played) level:
 	void restart();
-	RollLevel level;
+	BirdLevel level;
 	bool won = false;
-	bool lost = false;
 
 	//Current control signals:
 	struct {

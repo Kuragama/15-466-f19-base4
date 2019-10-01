@@ -84,8 +84,8 @@ bool collide_ray_vs_cylinder(glm::vec3 ray_start, glm::vec3 ray_direction,
 
 	float limit = glm::dot(along, along);
 
-	float t0 = 0.0;
-	float t1 = 1.0;
+	float t0 = 0.0f;
+	float t1 = 1.0f;
 
 	float dot_from = glm::dot(ray_start-cylinder_a, along);
 	float dot_to = glm::dot(ray_start+ray_direction-cylinder_a, along);
@@ -93,7 +93,7 @@ bool collide_ray_vs_cylinder(glm::vec3 ray_start, glm::vec3 ray_direction,
 	if(dot_from<0.0f)
 	{
 		if(dot_to<=dot_from) return false;
-		t0 = (0.0-dot_from)/(dot_to-dot_from);
+		t0 = (float)(0.0f-dot_from)/(float)(dot_to-dot_from);
 	}
 	if(dot_from>limit)
 	{

@@ -1,4 +1,4 @@
-#include "RollLevel.hpp"
+#include "BirdLevel.hpp"
 #include "data_path.hpp"
 #include "LitColorTextureProgram.hpp"
 
@@ -17,38 +17,41 @@ GLuint roll_meshes_for_lit_color_texture_program = 0;
 
 //Load the meshes used in Sphere Roll levels:
 Load< MeshBuffer > roll_meshes(LoadTagDefault, []() -> MeshBuffer * {
-	MeshBuffer *ret = new MeshBuffer(data_path("Field.pnct"));
+	MeshBuffer *ret = new MeshBuffer(data_path("Field-parts.pnct"));
 
 	//Build vertex array object for the program we're using to shade these meshes:
 	roll_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 
 	//key objects:
-	mesh_Goal = &ret->lookup("Bird");
-	mesh_Sphere = &ret->lookup("Player");
+	mesh_Goal = &ret->lookup("Goal");
+	mesh_Sphere = &ret->lookup("Sphere");
 	
 	//these meshes collide as (simpler) boxes:
+	mesh_to_collider.insert(std::make_pair(&ret->lookup("Block.Dark"), &ret->lookup("Block.Simple")));
+	mesh_to_collider.insert(std::make_pair(&ret->lookup("Block.Light"), &ret->lookup("Block.Simple")));
 
 	//these meshes collide as themselves:
-	mesh_to_collider.insert(std::make_pair(&ret->lookup("Water"), &ret->lookup("Water")));
 	mesh_to_collider.insert(std::make_pair(&ret->lookup("Ground"), &ret->lookup("Ground")));
+	mesh_to_collider.insert(std::make_pair(&ret->lookup("Water"), &ret->lookup("Water")));
 	mesh_to_collider.insert(std::make_pair(&ret->lookup("WallA"), &ret->lookup("WallA")));
 	mesh_to_collider.insert(std::make_pair(&ret->lookup("WallB"), &ret->lookup("WallB")));
-	mesh_to_collider.insert(std::make_pair(&ret->lookup("Bird"), &ret->lookup("Bird")));
 
 	return ret;
 });
 
 //Load sphere roll levels:
-Load< std::list< RollLevel > > roll_levels(LoadTagLate, []() -> std::list< RollLevel > * {
-	std::list< RollLevel > *ret = new std::list< RollLevel >();
-	ret->emplace_back(data_path("Field.scene"));
+Load< std::list< BirdLevel > > roll_levels(LoadTagLate, []() -> std::list< BirdLevel > * {
+	std::list< BirdLevel > *ret = new std::list< BirdLevel >();
+	ret->emplace_back(data_path("roll-level-1.scene"));
+	ret->emplace_back(data_path("roll-level-2.scene"));
+	ret->emplace_back(data_path("roll-level-3.scene"));
 	return ret;
 });
 
 
-//-------- RollLevel ---------
+//-------- BirdLevel ---------
 
-RollLevel::RollLevel(std::string const &scene_file) {
+BirdLevel::BirdLevel(std::string const &scene_file) {
 	uint32_t decorations = 0;
 
 	//Load scene (using Scene::load function), building proper associations as needed:
@@ -104,10 +107,10 @@ RollLevel::RollLevel(std::string const &scene_file) {
 	camera->near = 0.05f;
 }
 
-RollLevel::RollLevel(RollLevel const &other) {
+BirdLevel::BirdLevel(BirdLevel const &other) {
 	*this = other;
 }
-RollLevel &RollLevel::operator=(RollLevel const &other) {
+BirdLevel &BirdLevel::operator=(BirdLevel const &other) {
 	//copy other's transforms, and remember the mapping between them and the copies:
 	std::unordered_map< Transform const *, Transform * > transform_to_transform;
 	//null transform maps to itself:
